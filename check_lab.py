@@ -1,63 +1,95 @@
-import json
-import os
+"""Validate Day 14 submission artifacts.
 
-def validate_lab():
-    print("🔍 Đang kiểm tra định dạng bài nộp...")
+The output intentionally uses ASCII so it works on Windows terminals that do
+not default to UTF-8.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).parent
+
+
+def load_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path} is not valid JSON: {exc}") from exc
+
+
+def count_jsonl(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+
+
+def validate_lab() -> bool:
+    print("[CHECK] Validating Day 14 submission format...")
 
     required_files = [
-        "reports/summary.json",
-        "reports/benchmark_results.json",
-        "analysis/failure_analysis.md"
+        ROOT / "data" / "golden_set.jsonl",
+        ROOT / "reports" / "summary.json",
+        ROOT / "reports" / "benchmark_results.json",
+        ROOT / "analysis" / "failure_analysis.md",
     ]
 
-    # 1. Kiểm tra sự tồn tại của tất cả file
     missing = []
-    for f in required_files:
-        if os.path.exists(f):
-            print(f"✅ Tìm thấy: {f}")
+    for path in required_files:
+        if path.exists():
+            print(f"[OK] Found: {path.relative_to(ROOT)}")
         else:
-            print(f"❌ Thiếu file: {f}")
-            missing.append(f)
+            print(f"[FAIL] Missing: {path.relative_to(ROOT)}")
+            missing.append(path)
 
     if missing:
-        print(f"\n❌ Thiếu {len(missing)} file. Hãy bổ sung trước khi nộp bài.")
-        return
+        print(f"[FAIL] Missing {len(missing)} required files.")
+        return False
 
-    # 2. Kiểm tra nội dung summary.json
-    try:
-        with open("reports/summary.json", "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"❌ File reports/summary.json không phải JSON hợp lệ: {e}")
-        return
+    total_cases = count_jsonl(ROOT / "data" / "golden_set.jsonl")
+    if total_cases < 50:
+        print(f"[FAIL] Golden dataset has {total_cases} cases; expected at least 50.")
+        return False
+    print(f"[OK] Golden dataset cases: {total_cases}")
 
-    if "metrics" not in data or "metadata" not in data:
-        print("❌ File summary.json thiếu trường 'metrics' hoặc 'metadata'.")
-        return
+    summary = load_json(ROOT / "reports" / "summary.json")
+    benchmark = load_json(ROOT / "reports" / "benchmark_results.json")
 
-    metrics = data["metrics"]
+    if "metrics" not in summary or "metadata" not in summary:
+        print("[FAIL] summary.json must contain 'metrics' and 'metadata'.")
+        return False
 
-    print(f"\n--- Thống kê nhanh ---")
-    print(f"Tổng số cases: {data['metadata'].get('total', 'N/A')}")
-    print(f"Điểm trung bình: {metrics.get('avg_score', 0):.2f}")
+    metrics = summary["metrics"]
+    required_metrics = [
+        "avg_score",
+        "hit_rate",
+        "mrr",
+        "agreement_rate",
+        "avg_latency_ms",
+        "estimated_cost_usd",
+    ]
+    for metric in required_metrics:
+        if metric not in metrics:
+            print(f"[FAIL] Missing metric: {metric}")
+            return False
+        print(f"[OK] Metric {metric}: {metrics[metric]}")
 
-    # EXPERT CHECKS
-    has_retrieval = "hit_rate" in metrics
-    if has_retrieval:
-        print(f"✅ Đã tìm thấy Retrieval Metrics (Hit Rate: {metrics['hit_rate']*100:.1f}%)")
-    else:
-        print(f"⚠️ CẢNH BÁO: Thiếu Retrieval Metrics (hit_rate).")
+    if "gate" not in summary or summary["gate"].get("decision") not in {"release", "rollback"}:
+        print("[FAIL] summary.json must include gate.decision as release/rollback.")
+        return False
+    print(f"[OK] Release gate: {summary['gate']['decision']}")
 
-    has_multi_judge = "agreement_rate" in metrics
-    if has_multi_judge:
-        print(f"✅ Đã tìm thấy Multi-Judge Metrics (Agreement Rate: {metrics['agreement_rate']*100:.1f}%)")
-    else:
-        print(f"⚠️ CẢNH BÁO: Thiếu Multi-Judge Metrics (agreement_rate).")
+    candidate_results = benchmark.get("candidate", [])
+    if len(candidate_results) < 50:
+        print(f"[FAIL] benchmark_results.json has {len(candidate_results)} candidate cases; expected at least 50.")
+        return False
+    print(f"[OK] Candidate benchmark cases: {len(candidate_results)}")
 
-    if data["metadata"].get("version"):
-        print(f"✅ Đã tìm thấy thông tin phiên bản Agent (Regression Mode)")
+    print("[PASS] Lab is ready for submission.")
+    return True
 
-    print("\n🚀 Bài lab đã sẵn sàng để chấm điểm!")
 
 if __name__ == "__main__":
-    validate_lab()
+    raise SystemExit(0 if validate_lab() else 1)

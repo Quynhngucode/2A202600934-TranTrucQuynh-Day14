@@ -2,5 +2,7 @@
 __pycache__/
 *.pyc
 .DS_Store
-reports/
+reports/*
+!reports/summary.json
+!reports/benchmark_results.json
 data/golden_set.jsonl

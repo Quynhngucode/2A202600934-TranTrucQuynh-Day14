@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "version": "v2_hybrid_rerank",
+    "total": 60,
+    "timestamp": "2026-06-16 15:16:40"
+  },
+  "metrics": {
+    "pass_rate": 0.95,
+    "avg_score": 4.5245,
+    "hit_rate": 0.9833,
+    "mrr": 0.9556,
+    "context_recall": 0.9917,
+    "context_precision": 0.2458,
+    "faithfulness": 0.8024,
+    "answer_relevance": 0.9044,
+    "agreement_rate": 0.9417,
+    "avg_latency_ms": 28.25,
+    "p95_latency_ms": 32.29,
+    "total_tokens": 9357,
+    "estimated_cost_usd": 0.001404
+  },
+  "failure_counts": {
+    "none": 56,
+    "answer_incomplete": 2,
+    "question_out_of_scope": 1,
+    "citation_missing_or_wrong": 1
+  },
+  "baseline": {
+    "metadata": {
+      "version": "v1_base",
+      "total": 60,
+      "timestamp": "2026-06-16 15:16:40"
+    },
+    "metrics": {
+      "pass_rate": 0.95,
+      "avg_score": 4.5245,
+      "hit_rate": 0.9833,
+      "mrr": 0.9583,
+      "context_recall": 0.9917,
+      "context_precision": 0.2458,
+      "faithfulness": 0.7953,
+      "answer_relevance": 0.9044,
+      "agreement_rate": 0.9417,
+      "avg_latency_ms": 43.89,
+      "p95_latency_ms": 49.77,
+      "total_tokens": 9376,
+      "estimated_cost_usd": 0.001406
+    },
+    "failure_counts": {
+      "none": 56,
+      "answer_incomplete": 2,
+      "question_out_of_scope": 1,
+      "citation_missing_or_wrong": 1
+    }
+  },
+  "gate": {
+    "decision": "release",
+    "reasons": [
+      "Candidate passes quality, retrieval, cost and latency gates."
+    ],
+    "delta": {
+      "avg_score": 0.0,
+      "hit_rate": 0.0,
+      "mrr": -0.0027,
+      "estimated_cost_usd": -2e-06,
+      "avg_latency_ms": -15.64
+    }
+  }
+}
